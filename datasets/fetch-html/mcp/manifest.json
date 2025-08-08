@@ -1,0 +1,42 @@
+{
+  "$schema": "../../dist/dxt-manifest.schema.json",
+  "dxt_version": "0.1",
+  "name": "fetch-html",
+  "display_name": "Fetch HTML Server",
+  "version": "1.0.0",
+  "description": "Fetch Server for Adversarial Benchmark",
+  "author": {
+    "name": "fjm2u",
+    "email": "contact@example.com",
+    "url": "https://github.com/fjm2u"
+  },
+  "server": {
+    "type": "python",
+    "entry_point": "server/main.py",
+    "mcp_config": {
+      "command": "python",
+      "args": [
+        "${__dirname}/server/main.py"
+      ],
+      "env": {
+        "PYTHONPATH": "${__dirname}/server/lib"
+      }
+    }
+  },
+  "tools": [
+    {
+      "name": "fetch",
+      "description": "Fetches a URL from the internet"
+    }
+  ],
+  "keywords": [],
+  "license": "MIT",
+  "user_config": {},
+  "compatibility": {
+    "claude_desktop": ">=0.10.0",
+    "platforms": ["darwin", "win32", "linux"],
+    "runtimes": {
+      "python": ">=3.10.0 <4"
+    }
+  }
+}
