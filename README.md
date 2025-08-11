@@ -36,14 +36,14 @@ flowchart LR
   JUDGE[評価用LLM]
 
   %% Flow
-  SCN -->|1. Load| R
-  R -->|2. Request| Client
-  Client <-->|3. Execute| EXEC
-  Client <-->|4. MCP Request/Response| MOCK
-  Client -->|5. Result| R
-  R -->|6. Evaluate| E
-  E <-->|7. Judge| JUDGE
-  E -->|8. Result| R
+  SCN -->|1: Load| R
+  R -->|2: Request| Client
+  Client <-->|3: Execute| EXEC
+  Client <-->|4: MCP Request/Response| MOCK
+  Client -->|5: Result| R
+  R -->|6: Evaluate| E
+  E <-->|7: Judge| JUDGE
+  E -->|8: Result| R
 ```
 
 ### コンポーネント解説
