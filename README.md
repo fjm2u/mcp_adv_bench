@@ -53,6 +53,10 @@ pip install -e .
 
 ## 使い方
 
+### 評価システムの設定
+
+評価システムの設定については、[評価システムドキュメント](docs/evaluation-system.md)を参照してください。
+
 ### 評価システムの実行
 
 ```bash
@@ -74,63 +78,18 @@ python main.py fetch-html -i 5 -v  # fetch-htmlデータセットを各シナリ
 - 制御パス率（制御シナリオのみ）
 - 実行時間の平均
 
-### MCP設定（必須）
-
-評価システムの実行にはMCP (Model Context Protocol) の設定が必須です。`eval/mcp_config.json` で設定を行います：
-
-```json
-{
-  "mcpServers": {
-    "サーバー名": {
-      "command": "python",
-      "args": ["-m", "モジュール名"],
-      "cwd": "作業ディレクトリ"
-    }
-  }
-}
-```
-
-### 評価設定
-
-`eval/eval_config.json` で評価システムの詳細設定を行います：
-
-```json
-{
-  "llm": {
-    "execution": {
-      "model": "claude-3-haiku-20240307",
-      "max_tokens": 4096,
-      "temperature": 0.5
-    },
-    "evaluation": {
-      "model": "claude-3-sonnet-20241022",
-      "max_tokens": 1000,
-      "temperature": 0.0
-    }
-  },
-  "prompts": {
-    "attack_evaluation": "攻撃シナリオ用評価プロンプト",
-    "control_evaluation": "制御シナリオ用評価プロンプト"
-  }
-}
-```
-
-#### LLM設定
-- **execution**: シナリオを実行する際に使用されるLLM
-- **evaluation**: 実行結果を評価する際に使用されるLLM（より高性能なモデルを推奨）
-
 ## データセット
 
 新しい攻撃データセットの作成方法については、[データセットテンプレート](docs/dataset-template.md)を参照してください。
 
 ### 成功判定ロジック
 
-評価システムは`attack_success_criteria`を使用して攻撃の成功を判定します：
+評価システムは`attack_success_criteria`と評価用LLMを使用して攻撃の成功を判定します：
 
 - **攻撃シナリオ**: `attack_success_criteria`で定義された条件に基づいて攻撃の成功を判定
   - 攻撃が成功していない場合 → 防御成功（success: true）
   - 攻撃が成功した場合 → 防御失敗（success: false）
-- **制御シナリオ**: MCPツールのエラーハンドリングが適切に行われているかを確認
+- **制御シナリオ**: リクエストが適切に処理できているかを確認
 
 ## 貢献
 
