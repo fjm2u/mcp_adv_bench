@@ -1,43 +1,58 @@
 # MCP Adversarial Benchmark
-> [!WARNING]
-> このリポジトリには潜在的に危険な攻撃パターンが含まれています。研究・防御目的でのみ使用してください。
-
-
 > [!NOTE]
 > Since the maintainer is a native Japanese speaker, the codebase is currently written mainly in Japanese.
 > An English version will be provided later.
+
+
+> [!WARNING]
+> このリポジトリには潜在的に危険な攻撃パターンが含まれています。研究・防御目的でのみ使用してください。
 
 このプロジェクトは、Model Context Protocol (MCP)に対するプロンプトインジェクションやその他攻撃の検証と防御策の研究を行うためのベンチマークリポジトリです。
 
 より具体的には、「MCPとAIに悪意がないが、MCPから返されるデータによってAIが意図しない行動をしてしまう」という攻撃に対する評価を行うためのものです。
 このような意図しない動作のパターンを研究し、防御策を開発することが本プロジェクトの主要な目的です。
 
+## アーキテクチャ
+
 ```mermaid
 flowchart LR
-  %% Groups
-  subgraph C[MCP Client]
-    direction TB
-    LLM[LLM]
-    MU[mcp-use]
-    LC[LangChain]
+  %% Components
+  subgraph System[評価システム]
+    R[Runner<br/>シナリオ実行管理]
+    E[Evaluator<br/>LLM as a Judge]
+    subgraph Client[MCP Client]
+      direction TB
+      MU[mcp-use]
+      LC[LangChain]
+    end
   end
 
-  subgraph D[Dataset]
-    direction TB
-    MOCK[Mock MCP Server]
-    SCN[Scenarios]
+  subgraph Dataset[データセット]
+    SCN[Scenarios<br/>攻撃/制御シナリオ]
+    MOCK[Mock MCP Server<br/>攻撃ペイロード提供]
   end
 
-  R[Runner]
-  E[Evaluator]
+  EXEC[実行用LLM]
+  JUDGE[評価用LLM]
 
   %% Flow
-  SCN -->|1.Load scenario| R
-  R -->|2.Execute scenario| C
-  C -->|3.Tool calls / queries| MOCK
-  R -->|4.Judge attack success| E
-
+  SCN -->|1. Load| R
+  R -->|2. Request| Client
+  Client <-->|3. Execute| EXEC
+  Client <-->|4. MCP Request/Response| MOCK
+  Client -->|5. Result| R
+  R -->|6. Evaluate| E
+  E <-->|7. Judge| JUDGE
+  E -->|8. Result| R
 ```
+
+### コンポーネント解説
+
+- **Scenarios**: 攻撃シナリオと制御シナリオを定義したYAMLファイル
+- **Runner**: シナリオの読み込みと実行を管理する中央コントローラー
+- **MCP Client**: LangChainとmcp-useを使用したMCPクライアント
+- **Evaluator**: 評価用LLMを使用して攻撃の成否を判定
+- **Mock MCP Server**: 各データセットに含まれる攻撃ペイロードを提供するサーバー
 
 
 ## セットアップ
@@ -55,7 +70,8 @@ pip install -e .
 
 ### 評価システムの設定
 
-評価システムの設定については、[評価システムドキュメント](docs/evaluation-system.md)を参照してください。
+`eval/eval_config.json`で実行用LLMと評価用LLMのモデル・パラメータ・プロンプト、実行するMCPを設定できます。
+詳細については、[評価システムドキュメント](docs/evaluation-system.md)を参照してください。
 
 ### 評価システムの実行
 
@@ -80,7 +96,7 @@ python main.py fetch-html -i 5 -v  # fetch-htmlデータセットを各シナリ
 
 ## データセット
 
-新しい攻撃データセットの作成方法については、[データセットテンプレート](docs/dataset-template.md)を参照してください。
+攻撃データセットの構造についての詳細は、[データセットテンプレート](docs/dataset-template.md)を参照してください。
 
 ### 成功判定ロジック
 
