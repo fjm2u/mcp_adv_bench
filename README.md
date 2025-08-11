@@ -32,10 +32,10 @@ flowchart LR
   E[Evaluator]
 
   %% Flow
-  SCN -- "1. Load scenario" --> R
-  R -- "2. Execute scenario" --> C
-  C -- "3. Tool calls / queries" --> MOCK
-  R -- "4. Judge attack success" --> E
+  SCN -->|1.Load scenario| R
+  R -->|2.Execute scenario| C
+  C -->|3.Tool calls / queries| MOCK
+  R -->|4.Judge attack success| E
 
 ```
 
@@ -43,6 +43,10 @@ flowchart LR
 ## セットアップ
 
 ```bash
+# 環境変数の設定
+cp .env.example .env
+# .envファイルを編集してAPIキーを設定
+
 # 依存関係のインストール
 pip install -e .
 ```
@@ -70,9 +74,9 @@ python main.py fetch-html -i 5 -v  # fetch-htmlデータセットを各シナリ
 - 制御パス率（制御シナリオのみ）
 - 実行時間の平均
 
-### MCP設定
+### MCP設定（必須）
 
-MCP (Model Context Protocol) を使用する場合は、`eval/mcp_config.json` で設定を行います：
+評価システムの実行にはMCP (Model Context Protocol) の設定が必須です。`eval/mcp_config.json` で設定を行います：
 
 ```json
 {
@@ -86,40 +90,42 @@ MCP (Model Context Protocol) を使用する場合は、`eval/mcp_config.json` �
 }
 ```
 
-### 環境変数設定
+### 評価設定
 
-```bash
-# OpenAIの場合
-export OPENAI_API_KEY="your-api-key"
+`eval/eval_config.json` で評価システムの詳細設定を行います：
 
-# Anthropicの場合（デフォルトで必要）
-export ANTHROPIC_API_KEY="your-api-key"
+```json
+{
+  "llm": {
+    "execution": {
+      "model": "claude-3-haiku-20240307",
+      "max_tokens": 4096,
+      "temperature": 0.5
+    },
+    "evaluation": {
+      "model": "claude-3-sonnet-20241022",
+      "max_tokens": 1000,
+      "temperature": 0.0
+    }
+  },
+  "prompts": {
+    "attack_evaluation": "攻撃シナリオ用評価プロンプト",
+    "control_evaluation": "制御シナリオ用評価プロンプト"
+  }
+}
 ```
 
+#### LLM設定
+- **execution**: シナリオを実行する際に使用されるLLM
+- **evaluation**: 実行結果を評価する際に使用されるLLM（より高性能なモデルを推奨）
 
-## 拡張方法
+## データセット
 
-### 成功判定ロジックのカスタマイズ
+新しい攻撃データセットの作成方法については、[データセットテンプレート](docs/dataset-template.md)を参照してください。
 
-評価システムは`attack_success_criteria`を使用して攻撃の成功を判定します。
+### 成功判定ロジック
 
-#### scenarios.ymlの構造
-
-```yaml
-scenarios:
-  - name: "攻撃シナリオ名"
-    user_request: "ユーザーのリクエスト"
-    expected_behavior: "期待される正常な動作"
-    attack_goal: "攻撃の目的"
-    attack_case: true
-    attack_success_criteria:
-      type: "context_analysis"
-      conditions:
-        - "攻撃が成功した場合の条件1"
-        - "攻撃が成功した場合の条件2"
-```
-
-#### 判定ロジック
+評価システムは`attack_success_criteria`を使用して攻撃の成功を判定します：
 
 - **攻撃シナリオ**: `attack_success_criteria`で定義された条件に基づいて攻撃の成功を判定
   - 攻撃が成功していない場合 → 防御成功（success: true）
@@ -128,11 +134,8 @@ scenarios:
 
 ## 貢献
 
-新しい攻撃パターンや防御策の提案は歓迎します。貢献の際は以下を守ってください：
-
-1. 倫理的な研究目的であることを明確にする
-2. 発見した脆弱性は責任を持って開示する
-3. テストコードには適切な警告を含める
+新しい攻撃パターンや防御策の提案を歓迎します。
+特に、データセットの追加について貢献頂けると嬉しいです。
 
 ## ライセンス・免責事項
 このプロジェクトはApache2.0ライセンスの下で提供されています。

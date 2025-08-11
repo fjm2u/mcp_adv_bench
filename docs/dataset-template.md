@@ -6,15 +6,13 @@
 
 ```
 [dataset-name]/
-├── README.md                       # データセット固有の説明書
 ├── scenarios.yml                   # テストシナリオ定義ファイル
 └── mcp/                           # MCPモックサーバー実装
+    ├── README.md                  # データセット固有の説明書
+    ├── manifest.json              # MCPサーバーマニフェスト（DXT作成のため）
     ├── pyproject.toml             # Pythonプロジェクト設定
-    └── src/
-        └── mcp_server_[name]/
-            ├── __init__.py
-            ├── __main__.py        # エントリーポイント
-            └── server.py          # モックサーバー実装本体
+    └── server/
+        └── main.py                # モックサーバー実装本体
 ```
 
 ## データセット構成要素
@@ -29,12 +27,25 @@ scenarios:
     expected_behavior: "期待される正常な動作"
     attack_goal: "攻撃の目的（攻撃シナリオの場合）"
     attack_case: true/false  # 攻撃シナリオかどうか
-
-testing_instructions:
-  - "テスト実施に関する指示"
+    attack_success_criteria:  # 攻撃シナリオの場合のみ
+      type: "context_analysis"
+      conditions:
+        - "攻撃が成功した場合の条件1"
+        - "攻撃が成功した場合の条件2"
 ```
 
 ### 2. MCPモックサーバー（mcp/）
+
+#### manifest.json
+MCPサーバーのマニフェストファイル。サーバーの名前、説明、バージョンを定義：
+
+```json
+{
+  "name": "mcp-[name]",
+  "version": "1.0.0",
+  "description": "Mock [name] server for adversarial testing"
+}
+```
 
 #### pyproject.toml
 - プロジェクト名、バージョン、依存関係を定義
@@ -53,14 +64,14 @@ dependencies = [
 ]
 
 [project.scripts]
-mcp-mock-[name] = "mcp_server_[name]:main"
+mcp-[name] = "server.main:run"
 
 [build-system]
 requires = ["hatchling"]
 build-backend = "hatchling.build"
 ```
 
-#### server.py
+#### server/main.py
 モックサーバーの実装。以下の要素を含む：
 
 1. **ツール定義**
@@ -77,7 +88,7 @@ build-backend = "hatchling.build"
    - `call_tool()`: ツール実行処理
    - エラーハンドリング
 
-### 3. README.md
+### 3. mcp/README.md
 データセット固有の情報を記載：
 - 攻撃の概要と目的
 - 各攻撃パターンの詳細説明
@@ -140,5 +151,5 @@ mkdir -p datasets/[new-attack-name]/mcp/src/mcp_server_[name]
 - [ ] 制御シナリオが含まれている
 - [ ] MCPサーバーが正しく起動する
 - [ ] 各シナリオに明確な検証基準がある
-- [ ] README.mdにデータセット固有の情報が記載されている
-- [ ] セキュリティ考慮事項が守られている
+- [ ] mcp/README.mdにデータセット固有の情報が記載されている
+- [ ] manifest.jsonが正しく設定されている
