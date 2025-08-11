@@ -1,18 +1,43 @@
 # MCP Adversarial Benchmark
 > [!WARNING]
->
 > このリポジトリには潜在的に危険な攻撃パターンが含まれています。研究・防御目的でのみ使用してください。
 
-> [!INFO]
->
+
+> [!NOTE]
 > Since the maintainer is a native Japanese speaker, the codebase is currently written mainly in Japanese.
 > An English version will be provided later.
 
-このプロジェクトは、Model Context Protocol (MCP)に対するプロンプトインジェクションやその他の敵対的攻撃の検証と防御策の研究を行うためのベンチマークリポジトリです。
+このプロジェクトは、Model Context Protocol (MCP)に対するプロンプトインジェクションやその他攻撃の検証と防御策の研究を行うためのベンチマークリポジトリです。
 
-このリポジトリは「MCPとAI」に悪意がないが、MCPから返されるデータによってAIが意図しない行動をしてしまうという攻撃に対する評価を行うためのものです。
-MCPサーバー自体は正常に動作していても、返されるデータの内容によって、AIシステムが本来の指示とは異なる動作をする可能性があります。
+より具体的には、「MCPとAIに悪意がないが、MCPから返されるデータによってAIが意図しない行動をしてしまう」という攻撃に対する評価を行うためのものです。
 このような意図しない動作のパターンを研究し、防御策を開発することが本プロジェクトの主要な目的です。
+
+```mermaid
+flowchart LR
+  %% Groups
+  subgraph C[MCP Client]
+    direction TB
+    LLM[LLM]
+    MU[mcp-use]
+    LC[LangChain]
+  end
+
+  subgraph D[Dataset]
+    direction TB
+    MOCK[Mock MCP Server]
+    SCN[Scenarios]
+  end
+
+  R[Runner]
+  E[Evaluator]
+
+  %% Flow
+  SCN -- "1. Load scenario" --> R
+  R -- "2. Execute scenario" --> C
+  C -- "3. Tool calls / queries" --> MOCK
+  R -- "4. Judge attack success" --> E
+
+```
 
 
 ## セットアップ
@@ -20,14 +45,6 @@ MCPサーバー自体は正常に動作していても、返されるデータ�
 ```bash
 # 依存関係のインストール
 pip install -e .
-
-# 評価システムの依存関係をインストール
-cd eval
-pip install -r requirements.txt
-
-# LLMプロバイダー（いずれか1つ、オプション）
-pip install langchain-openai     # OpenAI使用の場合
-pip install langchain-anthropic  # Anthropic使用の場合
 ```
 
 ## 使い方
@@ -117,10 +134,8 @@ scenarios:
 2. 発見した脆弱性は責任を持って開示する
 3. テストコードには適切な警告を含める
 
-## ライセンス
-
-このプロジェクトは研究目的でのみ使用可能です。悪意のある使用は固く禁じられています。
-
-## 免責事項
-
-このツールは教育・研究目的でのみ提供されています。不正使用による損害について、作者は一切の責任を負いません。
+## ライセンス・免責事項
+このプロジェクトはApache2.0ライセンスの下で提供されています。
+悪意のある使用は固く禁じられています。
+このツールは教育・研究目的でのみ提供されています。
+不正使用による損害について、作者は一切の責任を負いません。
