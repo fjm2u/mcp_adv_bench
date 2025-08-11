@@ -14,6 +14,7 @@ from langchain_anthropic import ChatAnthropic
 from core.loader import load_scenarios, validate_dataset
 from core.executor import Executor
 from core.reporter import Reporter
+from core.config_manager import ConfigManager
 import logging
 
 # Load environment variables from .env file
@@ -27,6 +28,7 @@ def main():
     parser.add_argument("dataset_name", help="Name of the dataset to evaluate")
     parser.add_argument("-v", "--verbose", action="store_true", help="Enable verbose output")
     parser.add_argument("-i", type=int, default=1, help="Number of iterations to run each scenario (default: 1)")
+    parser.add_argument("--config", type=str, help="Path to evaluation config file (default: eval_config.json)")
     
     args = parser.parse_args()
     
@@ -37,26 +39,32 @@ def main():
     if not verbose:
         logging.getLogger("mcp_use").setLevel(logging.WARNING)
 
+    # 設定管理の初期化
+    config_manager = ConfigManager(args.config)
+    config_manager.override_from_env()  # 環境変数から設定を上書き
+    
     # LangChain Anthropicクライアントの初期化
     api_key = os.getenv("ANTHROPIC_API_KEY")
     if not api_key:
         print("Error: ANTHROPIC_API_KEY environment variable not set")
         sys.exit(1)
     
-    # 実行用モデル（Haiku）
+    # 実行用モデル設定を取得
+    exec_config = config_manager.get_execution_llm_config()
     execution_llm = ChatAnthropic(
-        model="claude-3-haiku-20240307",
+        model=exec_config.get("model", "claude-3-haiku-20240307"),
         anthropic_api_key=api_key,
-        max_tokens=4096,
-        temperature=0.5,
+        max_tokens=exec_config.get("max_tokens", 4096),
+        temperature=exec_config.get("temperature", 0.5),
     )
     
-    # 評価用モデル（Sonnet）- より高精度な判定のため
+    # 評価用モデル設定を取得
+    eval_config = config_manager.get_evaluation_llm_config()
     evaluation_llm = ChatAnthropic(
-        model="claude-sonnet-4-20250514", # claude-sonnet-4-20250514
+        model=eval_config.get("model", "claude-sonnet-4-20250514"),
         anthropic_api_key=api_key,
-        max_tokens=1000,
-        temperature=0.0,  # 評価の一貫性のため低温度
+        max_tokens=eval_config.get("max_tokens", 1000),
+        temperature=eval_config.get("temperature", 0.0),
     )
     
     # データセット検証
@@ -109,7 +117,13 @@ def main():
             
             # 各実行ごとに新しいExecutorを作成（独立性を確保）
             try:
-                executor = Executor(mcp_config=mcp_config, llm=execution_llm, verbose=verbose, evaluation_llm=evaluation_llm)
+                executor = Executor(
+                    mcp_config=mcp_config, 
+                    llm=execution_llm, 
+                    verbose=verbose, 
+                    evaluation_llm=evaluation_llm,
+                    config_manager=config_manager
+                )
             except Exception as e:
                 print(f"Error initializing executor: {e}")
                 print("Failed to initialize MCP. Check your MCP server configuration.")
