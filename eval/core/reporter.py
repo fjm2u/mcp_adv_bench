@@ -79,6 +79,15 @@ class Reporter:
                         success_rate = success_count / len(valid_results)
                         stat_copy['success_rate'] = f"{success_rate:.1%}"
                         stat_copy['success_count'] = success_count
+                        
+                        # confidenceの平均を計算
+                        confidences = []
+                        for r in valid_results:
+                            if hasattr(r, 'evaluation_details') and r.evaluation_details:
+                                if 'confidence' in r.evaluation_details:
+                                    confidences.append(r.evaluation_details['confidence'])
+                        if confidences:
+                            stat_copy['avg_confidence'] = sum(confidences) / len(confidences)
                     else:
                         stat_copy['success_rate'] = "N/A (all errors)"
                         stat_copy['success_count'] = 0
@@ -92,7 +101,8 @@ class Reporter:
                             'iterations': stat_copy['iterations'],
                             'valid_iterations': stat_copy['valid_iterations'],
                             'error_count': stat_copy['error_count'],
-                            'success_rate': success_rate
+                            'success_rate': success_rate,
+                            'avg_confidence': stat_copy.get('avg_confidence')
                         })
                     else:
                         control_scenarios.append({
@@ -101,7 +111,8 @@ class Reporter:
                             'iterations': stat_copy['iterations'],
                             'valid_iterations': stat_copy['valid_iterations'],
                             'error_count': stat_copy['error_count'],
-                            'success_rate': success_rate
+                            'success_rate': success_rate,
+                            'avg_confidence': stat_copy.get('avg_confidence')
                         })
                     
                     del stat_copy['results']  # 元のresultsフィールドを削除
@@ -121,8 +132,12 @@ class Reporter:
                 
                 if total_valid_attack_iterations > 0:
                     attack_block_rate = total_attack_successes / total_valid_attack_iterations
+                    # 全体の平均confidenceを計算
+                    avg_confidences = [s['avg_confidence'] for s in attack_scenarios if s.get('avg_confidence') is not None]
+                    overall_avg_confidence = sum(avg_confidences) / len(avg_confidences) if avg_confidences else None
                 else:
                     attack_block_rate = 0
+                    overall_avg_confidence = None
                 
                 report['summary']['attack_scenarios'] = {
                     'count': len(attack_scenarios),
@@ -130,13 +145,15 @@ class Reporter:
                     'valid_iterations': total_valid_attack_iterations,
                     'error_count': total_attack_errors,
                     'overall_block_rate': f"{attack_block_rate:.1%}",
+                    'avg_confidence': overall_avg_confidence,
                     'details': [
                         {
                             'name': s['name'],
                             'block_rate': f"{s['success_rate']:.1%}",
                             'blocked': f"{s['success_count']}/{s['valid_iterations']}",
                             'errors': s.get('error_count', 0),
-                            'total': s['iterations']
+                            'total': s['iterations'],
+                            'avg_confidence': s.get('avg_confidence')
                         }
                         for s in attack_scenarios
                     ]
@@ -151,8 +168,12 @@ class Reporter:
                 
                 if total_valid_control_iterations > 0:
                     control_pass_rate = total_control_successes / total_valid_control_iterations
+                    # 全体の平均confidenceを計算
+                    avg_confidences = [s['avg_confidence'] for s in control_scenarios if s.get('avg_confidence') is not None]
+                    overall_avg_confidence = sum(avg_confidences) / len(avg_confidences) if avg_confidences else None
                 else:
                     control_pass_rate = 0
+                    overall_avg_confidence = None
                 
                 report['summary']['control_scenarios'] = {
                     'count': len(control_scenarios),
@@ -160,13 +181,15 @@ class Reporter:
                     'valid_iterations': total_valid_control_iterations,
                     'error_count': total_control_errors,
                     'overall_pass_rate': f"{control_pass_rate:.1%}",
+                    'avg_confidence': overall_avg_confidence,
                     'details': [
                         {
                             'name': s['name'],
                             'pass_rate': f"{s['success_rate']:.1%}",
                             'passed': f"{s['success_count']}/{s['valid_iterations']}",
                             'errors': s.get('error_count', 0),
-                            'total': s['iterations']
+                            'total': s['iterations'],
+                            'avg_confidence': s.get('avg_confidence')
                         }
                         for s in control_scenarios
                     ]
@@ -281,6 +304,8 @@ class Reporter:
                 print(f"   Overall block rate: {attack_info['overall_block_rate']} (excluding {attack_info['error_count']} errors)")
             else:
                 print(f"   Overall block rate: {attack_info['overall_block_rate']}")
+            if 'avg_confidence' in attack_info and attack_info['avg_confidence'] is not None:
+                print(f"   Average confidence: {attack_info['avg_confidence']:.2f}")
             if 'details' in attack_info:
                 print("   Per-scenario block rates:")
                 for detail in attack_info['details']:
@@ -300,6 +325,8 @@ class Reporter:
                 print(f"   Overall pass rate: {control_info['overall_pass_rate']} (excluding {control_info['error_count']} errors)")
             else:
                 print(f"   Overall pass rate: {control_info['overall_pass_rate']}")
+            if 'avg_confidence' in control_info and control_info['avg_confidence'] is not None:
+                print(f"   Average confidence: {control_info['avg_confidence']:.2f}")
             if 'details' in control_info:
                 print("   Per-scenario pass rates:")
                 for detail in control_info['details']:

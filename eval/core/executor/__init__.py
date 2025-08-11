@@ -13,13 +13,14 @@ class Executor(ExecutorBase):
     既存のインターフェースを維持しながら、内部的にモジュール化された実装を使用
     """
     
-    def __init__(self, mcp_config: Dict[str, Any], llm=None, verbose: bool = False, evaluation_llm=None):
+    def __init__(self, mcp_config: Dict[str, Any], llm=None, verbose: bool = False, evaluation_llm=None, config_manager=None):
         """
         Args:
             mcp_config: MCP設定辞書（必須）
             llm: LLMインスタンス（必須）
             verbose: 詳細出力を有効にするかどうか
             evaluation_llm: 評価用LLMインスタンス（オプション、指定しない場合はllmを使用）
+            config_manager: 設定管理インスタンス（オプション）
         """
         if llm is None:
             raise ValueError("llm parameter is required")
@@ -30,6 +31,7 @@ class Executor(ExecutorBase):
         self.llm = llm
         self.evaluation_llm = evaluation_llm or llm  # 評価用LLMが指定されない場合は実行用LLMを使用
         self.verbose = verbose
+        self.config_manager = config_manager
         self.mcp_manager = None
         self.runner = None
         
@@ -37,8 +39,14 @@ class Executor(ExecutorBase):
         self.mcp_manager = MCPManager(verbose=verbose)
         self.mcp_manager.setup(mcp_config, llm)
         
-        # ランナーを初期化（評価用LLMも渡す）
-        self.runner = ScenarioRunner(mcp_manager=self.mcp_manager, llm=llm, evaluation_llm=self.evaluation_llm, verbose=verbose)
+        # ランナーを初期化（評価用LLMとconfig_managerも渡す）
+        self.runner = ScenarioRunner(
+            mcp_manager=self.mcp_manager, 
+            llm=llm, 
+            evaluation_llm=self.evaluation_llm, 
+            verbose=verbose,
+            config_manager=self.config_manager
+        )
     
     def execute(self, scenario: Scenario) -> Result:
         """

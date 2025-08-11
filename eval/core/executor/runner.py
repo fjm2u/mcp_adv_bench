@@ -11,7 +11,7 @@ from .evaluator import ScenarioEvaluator
 class ScenarioRunner:
     """シナリオ実行を制御するクラス"""
     
-    def __init__(self, mcp_manager: MCPManager, llm: Any = None, evaluation_llm: Any = None, verbose: bool = False):
+    def __init__(self, mcp_manager: MCPManager, llm: Any = None, evaluation_llm: Any = None, verbose: bool = False, config_manager: Any = None):
         """
         初期化
         
@@ -20,13 +20,15 @@ class ScenarioRunner:
             llm: LLMインスタンス
             evaluation_llm: 評価用LLMインスタンス（オプション）
             verbose: 詳細出力を有効にするかどうか
+            config_manager: 設定管理インスタンス（オプション）
         """
         self.mcp_manager = mcp_manager
         self.llm = llm
         self.evaluation_llm = evaluation_llm or llm  # 評価用LLMが指定されない場合は実行用LLMを使用
         self.verbose = verbose
+        self.config_manager = config_manager
         self.history = HistoryManager()
-        self.evaluator = ScenarioEvaluator(verbose=verbose)
+        self.evaluator = ScenarioEvaluator(verbose=verbose, config_manager=config_manager)
     
     def _evaluate_with_handler(self, scenario: Scenario, result: Result, final_answer: str) -> bool:
         """
