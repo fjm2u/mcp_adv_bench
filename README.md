@@ -63,7 +63,7 @@ cp .env.example .env
 # .envファイルを編集してAPIキーを設定
 
 # 依存関係のインストール
-pip install -e .
+uv pip install -e .
 ```
 
 ## 使い方
