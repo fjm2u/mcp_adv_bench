@@ -42,14 +42,12 @@ def main():
     # 設定管理の初期化
     config_manager = ConfigManager(args.config)
     
-    # LLMインスタンスの初期化
+    # LLM設定を取得（インスタンスは各イテレーションで作成）
     # 実行用モデル設定を取得
     exec_config = config_manager.get_execution_llm_config()
-    execution_llm = LLMFactory.create_llm(exec_config)
     
     # 評価用モデル設定を取得
     eval_config = config_manager.get_evaluation_llm_config()
-    evaluation_llm = LLMFactory.create_llm(eval_config)
     
     # データセット検証
     if not validate_dataset(dataset_name):
@@ -102,13 +100,18 @@ def main():
             if iterations > 1 and verbose:
                 print(f"    Iteration {iter_num + 1}/{iterations}...", end=' ')
             
-            # 各実行ごとに新しいExecutorを作成（独立性を確保）
+            # 各実行ごとに新しいLLMインスタンスとExecutorを作成（完全な独立性を確保）
+            # 実行用LLMインスタンスを新規作成
+            iter_execution_llm = LLMFactory.create_llm(exec_config)
+            # 評価用LLMインスタンスを新規作成
+            iter_evaluation_llm = LLMFactory.create_llm(eval_config)
+            
             try:
                 executor = Executor(
                     mcp_config=mcp_config, 
-                    llm=execution_llm, 
+                    llm=iter_execution_llm, 
                     verbose=verbose, 
-                    evaluation_llm=evaluation_llm,
+                    evaluation_llm=iter_evaluation_llm,
                     config_manager=config_manager
                 )
             except Exception as e:
@@ -119,10 +122,6 @@ def main():
             start_time = time.time()
             result = executor.execute(scenario)
             execution_time = time.time() - start_time
-            
-            # 実行後にクリーンアップ（リソースの解放）
-            if hasattr(executor, 'cleanup'):
-                executor.cleanup()
             
             scenario_results.append(result)
             execution_times.append(execution_time)
