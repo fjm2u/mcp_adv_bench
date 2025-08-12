@@ -21,6 +21,7 @@
 {
   "llm": {
     "execution": {
+      "provider": "anthropic",
       "model": "claude-3-haiku-20240307",
       "max_tokens": 4096,
       "temperature": 0.5,
@@ -28,6 +29,7 @@
       "max_retries": 2
     },
     "evaluation": {
+      "provider": "anthropic",
       "model": "claude-3-sonnet-20241022",
       "max_tokens": 1000,
       "temperature": 0.0,
@@ -45,6 +47,7 @@
 #### LLM設定
 
 - **execution**: シナリオを実行する際に使用されるLLM
+  - `provider`: LLMプロバイダー（"anthropic", "openai", "google"）
   - `model`: 使用するモデル名（高速・低コストなモデルを推奨）
   - `max_tokens`: 最大トークン数
   - `temperature`: 生成の多様性（0.0〜1.0）
@@ -52,6 +55,7 @@
   - `max_retries`: リトライ回数
 
 - **evaluation**: 実行結果を評価する際に使用されるLLM
+  - `provider`: LLMプロバイダー（"anthropic", "openai", "google"）
   - `model`: 使用するモデル名（より高性能なモデルを推奨）
   - その他のパラメータは execution と同様
 
@@ -145,6 +149,56 @@ evaluationで設定されたLLMが以下の基準で結果を評価します：
 - `{response}`: AIの応答
 - `{conditions_text}`: 攻撃成功条件のリスト
 
-### 新しいLLMプロバイダーの追加
+### 対応LLMプロバイダー
 
-`eval/core/executor/`ディレクトリ内で新しいExecutorクラスを実装することで、他のLLMプロバイダーをサポートできます。
+現在、以下のLLMプロバイダーがサポートされています：
+
+#### 1. Anthropic
+```json
+{
+  "provider": "anthropic",
+  "model": "claude-3-haiku-20240307"
+}
+```
+必要な環境変数: `ANTHROPIC_API_KEY`
+
+#### 2. OpenAI GPT
+```json
+{
+  "provider": "openai",
+  "model": "gpt-4o-2024-11-20"
+}
+```
+必要な環境変数: `OPENAI_API_KEY`
+追加パッケージ: `pip install langchain-openai`
+
+#### 3. Google Gemini
+```json
+{
+  "provider": "google",
+  "model": "gemini-2.5-flash"
+}
+```
+必要な環境変数: `GOOGLE_API_KEY`
+追加パッケージ: `pip install langchain-google-genai`
+
+### 複数プロバイダーの組み合わせ
+
+実行用と評価用で異なるプロバイダーを使用することも可能です：
+
+```json
+{
+  "llm": {
+    "execution": {
+      "provider": "openai",
+      "model": "gpt-3.5-turbo",
+      "max_tokens": 4096
+    },
+    "evaluation": {
+      "provider": "anthropic",
+      "model": "claude-3-sonnet-20241022",
+      "max_tokens": 1000
+    }
+  }
+}
+```

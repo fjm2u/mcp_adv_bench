@@ -54,6 +54,7 @@ class ConfigManager:
         return {
             "llm": {
                 "execution": {
+                    "provider": "anthropic",
                     "model": "claude-3-haiku-20240307",
                     "max_tokens": 4096,
                     "temperature": 0.5,
@@ -61,6 +62,7 @@ class ConfigManager:
                     "max_retries": 2
                 },
                 "evaluation": {
+                    "provider": "anthropic",
                     "model": "claude-sonnet-4-20250514",
                     "max_tokens": 1000,
                     "temperature": 0.0,
@@ -132,37 +134,6 @@ class ConfigManager:
         return self.config["prompts"]["control_evaluation"]["template"]
     
     
-    def override_from_env(self):
-        """
-        環境変数から設定を上書き
-        
-        サポートする環境変数:
-        - EVAL_EXECUTION_MODEL: 実行用モデル名
-        - EVAL_EVALUATION_MODEL: 評価用モデル名
-        - EVAL_EXECUTION_TEMPERATURE: 実行用温度
-        - EVAL_EVALUATION_TEMPERATURE: 評価用温度
-        """
-        # 実行用モデル
-        if exec_model := os.getenv("EVAL_EXECUTION_MODEL"):
-            self.config["llm"]["execution"]["model"] = exec_model
-            
-        # 評価用モデル
-        if eval_model := os.getenv("EVAL_EVALUATION_MODEL"):
-            self.config["llm"]["evaluation"]["model"] = eval_model
-            
-        # 実行用温度
-        if exec_temp := os.getenv("EVAL_EXECUTION_TEMPERATURE"):
-            try:
-                self.config["llm"]["execution"]["temperature"] = float(exec_temp)
-            except ValueError:
-                print(f"Warning: Invalid EVAL_EXECUTION_TEMPERATURE value: {exec_temp}")
-                
-        # 評価用温度
-        if eval_temp := os.getenv("EVAL_EVALUATION_TEMPERATURE"):
-            try:
-                self.config["llm"]["evaluation"]["temperature"] = float(eval_temp)
-            except ValueError:
-                print(f"Warning: Invalid EVAL_EVALUATION_TEMPERATURE value: {eval_temp}")
     
     def save_config(self, path: Optional[str] = None):
         """
