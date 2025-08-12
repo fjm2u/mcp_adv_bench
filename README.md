@@ -61,7 +61,12 @@ flowchart LR
 # 環境変数の設定
 cp .env.example .env
 # .envファイルを編集してAPIキーを設定
+vi .env
 
+# 仮想環境の作成
+uv venv
+# 仮想環境の有効化
+source .venv/bin/activate
 # 依存関係のインストール
 uv pip install -e .
 ```
