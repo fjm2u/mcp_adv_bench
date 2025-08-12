@@ -47,7 +47,7 @@
 #### LLM設定
 
 - **execution**: シナリオを実行する際に使用されるLLM
-  - `provider`: LLMプロバイダー（"anthropic", "openai", "google"）
+  - `provider`: LLMプロバイダー（"anthropic", "openai"）
   - `model`: 使用するモデル名（高速・低コストなモデルを推奨）
   - `max_tokens`: 最大トークン数
   - `temperature`: 生成の多様性（0.0〜1.0）
@@ -55,7 +55,7 @@
   - `max_retries`: リトライ回数
 
 - **evaluation**: 実行結果を評価する際に使用されるLLM
-  - `provider`: LLMプロバイダー（"anthropic", "openai", "google"）
+  - `provider`: LLMプロバイダー（"anthropic", "openai"）
   - `model`: 使用するモデル名（より高性能なモデルを推奨）
   - その他のパラメータは execution と同様
 
@@ -171,16 +171,6 @@ evaluationで設定されたLLMが以下の基準で結果を評価します：
 ```
 必要な環境変数: `OPENAI_API_KEY`
 追加パッケージ: `pip install langchain-openai`
-
-#### 3. Google Gemini
-```json
-{
-  "provider": "google",
-  "model": "gemini-2.5-flash"
-}
-```
-必要な環境変数: `GOOGLE_API_KEY`
-追加パッケージ: `pip install langchain-google-genai`
 
 ### 複数プロバイダーの組み合わせ
 

@@ -33,8 +33,6 @@ class LLMFactory:
             return LLMFactory._create_anthropic(config)
         elif provider == "openai":
             return LLMFactory._create_openai(config)
-        elif provider == "google" or provider == "gemini":
-            return LLMFactory._create_google(config)
         else:
             raise ValueError(f"Unsupported LLM provider: {provider}")
     
@@ -83,30 +81,6 @@ class LLMFactory:
             max_retries=config.get("max_retries", 2)
         )
     
-    @staticmethod
-    def _create_google(config: Dict[str, Any]) -> BaseChatModel:
-        """Google Gemini LLMを作成"""
-        try:
-            from langchain_google_genai import ChatGoogleGenerativeAI
-        except ImportError:
-            print("Error: langchain-google-genai is not installed. Run: pip install langchain-google-genai")
-            sys.exit(1)
-        
-        api_key = os.getenv("GOOGLE_API_KEY")
-        if not api_key:
-            print("Error: GOOGLE_API_KEY environment variable not set")
-            sys.exit(1)
-        
-        model_name = config.get("model", "gemini-pro")
-        
-        return ChatGoogleGenerativeAI(
-            model=model_name,
-            google_api_key=api_key,
-            max_output_tokens=config.get("max_tokens", 4096),
-            temperature=config.get("temperature", 0.5),
-            timeout=config.get("timeout"),
-            max_retries=config.get("max_retries", 2)
-        )
     
     @staticmethod
     def detect_provider_from_model(model_name: str) -> str:
@@ -125,8 +99,6 @@ class LLMFactory:
             return "anthropic"
         elif "gpt" in model_lower:
             return "openai"
-        elif "gemini" in model_lower:
-            return "google"
         else:
             # デフォルトはanthropic
             return "anthropic"
