@@ -36,14 +36,14 @@ flowchart LR
   JUDGE[評価用LLM]
 
   %% Flow
-  SCN -->|1. Load| R
-  R -->|2. Request| Client
-  Client <-->|3. Execute| EXEC
-  Client <-->|4. MCP Request/Response| MOCK
-  Client -->|5. Result| R
-  R -->|6. Evaluate| E
-  E <-->|7. Judge| JUDGE
-  E -->|8. Result| R
+  SCN -->|1: Load| R
+  R -->|2: Request| Client
+  Client <-->|3: Execute| EXEC
+  Client <-->|4: MCP Request/Response| MOCK
+  Client -->|5: Result| R
+  R -->|6: Evaluate| E
+  E <-->|7: Judge| JUDGE
+  E -->|8: Result| R
 ```
 
 ### コンポーネント解説
@@ -52,7 +52,7 @@ flowchart LR
 - **Runner**: シナリオの読み込みと実行を管理する中央コントローラー
 - **MCP Client**: LangChainとmcp-useを使用したMCPクライアント
 - **Evaluator**: 評価用LLMを使用して攻撃の成否を判定
-- **Mock MCP Server**: 各データセットに含まれる攻撃ペイロードを提供するサーバー
+- **Mock MCP Server**: 各データセットに含まれる攻撃ペイロードを提供するMCPサーバー
 
 
 ## セットアップ
@@ -61,9 +61,14 @@ flowchart LR
 # 環境変数の設定
 cp .env.example .env
 # .envファイルを編集してAPIキーを設定
+vi .env
 
+# 仮想環境の作成
+uv venv
+# 仮想環境の有効化
+source .venv/bin/activate
 # 依存関係のインストール
-pip install -e .
+uv pip install -e .
 ```
 
 ## 使い方

@@ -10,8 +10,8 @@ import json
 import argparse
 import time
 from dotenv import load_dotenv
-from langchain_anthropic import ChatAnthropic
 from core.loader import load_scenarios, validate_dataset
+from core.llm_factory import LLMFactory
 from core.executor import Executor
 from core.reporter import Reporter
 from core.config_manager import ConfigManager
@@ -41,31 +41,13 @@ def main():
 
     # 設定管理の初期化
     config_manager = ConfigManager(args.config)
-    config_manager.override_from_env()  # 環境変数から設定を上書き
     
-    # LangChain Anthropicクライアントの初期化
-    api_key = os.getenv("ANTHROPIC_API_KEY")
-    if not api_key:
-        print("Error: ANTHROPIC_API_KEY environment variable not set")
-        sys.exit(1)
-    
+    # LLM設定を取得（インスタンスは各イテレーションで作成）
     # 実行用モデル設定を取得
     exec_config = config_manager.get_execution_llm_config()
-    execution_llm = ChatAnthropic(
-        model=exec_config.get("model", "claude-3-haiku-20240307"),
-        anthropic_api_key=api_key,
-        max_tokens=exec_config.get("max_tokens", 4096),
-        temperature=exec_config.get("temperature", 0.5),
-    )
     
     # 評価用モデル設定を取得
     eval_config = config_manager.get_evaluation_llm_config()
-    evaluation_llm = ChatAnthropic(
-        model=eval_config.get("model", "claude-sonnet-4-20250514"),
-        anthropic_api_key=api_key,
-        max_tokens=eval_config.get("max_tokens", 1000),
-        temperature=eval_config.get("temperature", 0.0),
-    )
     
     # データセット検証
     if not validate_dataset(dataset_name):
@@ -94,8 +76,11 @@ def main():
         mcp_config = json.load(f)
     
     print("Initializing MCP servers...")
-    print(f"  Execution model: {execution_llm.model}")
-    print(f"  Evaluation model: {evaluation_llm.model}")
+    # プロバイダー情報も表示
+    exec_provider = exec_config.get("provider", "anthropic")
+    eval_provider = eval_config.get("provider", "anthropic")
+    print(f"  Execution model: {exec_config.get('model')} (provider: {exec_provider})")
+    print(f"  Evaluation model: {eval_config.get('model')} (provider: {eval_provider})")
     
     # 結果を格納する変数
     results = []
@@ -115,13 +100,18 @@ def main():
             if iterations > 1 and verbose:
                 print(f"    Iteration {iter_num + 1}/{iterations}...", end=' ')
             
-            # 各実行ごとに新しいExecutorを作成（独立性を確保）
+            # 各実行ごとに新しいLLMインスタンスとExecutorを作成（完全な独立性を確保）
+            # 実行用LLMインスタンスを新規作成
+            iter_execution_llm = LLMFactory.create_llm(exec_config)
+            # 評価用LLMインスタンスを新規作成
+            iter_evaluation_llm = LLMFactory.create_llm(eval_config)
+            
             try:
                 executor = Executor(
                     mcp_config=mcp_config, 
-                    llm=execution_llm, 
+                    llm=iter_execution_llm, 
                     verbose=verbose, 
-                    evaluation_llm=evaluation_llm,
+                    evaluation_llm=iter_evaluation_llm,
                     config_manager=config_manager
                 )
             except Exception as e:
@@ -132,10 +122,6 @@ def main():
             start_time = time.time()
             result = executor.execute(scenario)
             execution_time = time.time() - start_time
-            
-            # 実行後にクリーンアップ（リソースの解放）
-            if hasattr(executor, 'cleanup'):
-                executor.cleanup()
             
             scenario_results.append(result)
             execution_times.append(execution_time)
@@ -169,17 +155,19 @@ def main():
             if verbose:
                 print(f"    Average execution time: {avg_time:.2f}s")
     
-    # LLMメタデータを作成
+    # LLMメタデータを作成（設定から直接取得）
     execution_llm_info = {
-        "model": execution_llm.model,
-        "temperature": execution_llm.temperature,
-        "max_tokens": execution_llm.max_tokens
+        "provider": exec_config.get("provider", "anthropic"),
+        "model": exec_config.get("model"),
+        "temperature": exec_config.get("temperature", 0.5),
+        "max_tokens": exec_config.get("max_tokens", 4096)
     }
     
     evaluation_llm_info = {
-        "model": evaluation_llm.model,
-        "temperature": evaluation_llm.temperature,
-        "max_tokens": evaluation_llm.max_tokens
+        "provider": eval_config.get("provider", "anthropic"),
+        "model": eval_config.get("model"),
+        "temperature": eval_config.get("temperature", 0.0),
+        "max_tokens": eval_config.get("max_tokens", 1000)
     }
     
     # レポート生成・保存

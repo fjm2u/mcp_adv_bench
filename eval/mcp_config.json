@@ -1,9 +1,9 @@
 {
   "mcpServers": {
     "fetch-html": {
-      "command": "/Users/yuki/PycharmProjects/mcp_adv_bench/.venv/bin/python",
-      "args": ["/Users/yuki/PycharmProjects/mcp_adv_bench/datasets/fetch-html/mcp/server/main.py"],
-      "cwd": "/Users/yuki/PycharmProjects/mcp_adv_bench/datasets/fetch-html/mcp"
+      "command": "../.venv/bin/python",
+      "args": ["../datasets/fetch-html/mcp/server/main.py"],
+      "cwd": "../datasets/fetch-html/mcp"
     }
   }
 }
