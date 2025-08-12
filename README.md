@@ -52,7 +52,7 @@ flowchart LR
 - **Runner**: シナリオの読み込みと実行を管理する中央コントローラー
 - **MCP Client**: LangChainとmcp-useを使用したMCPクライアント
 - **Evaluator**: 評価用LLMを使用して攻撃の成否を判定
-- **Mock MCP Server**: 各データセットに含まれる攻撃ペイロードを提供するサーバー
+- **Mock MCP Server**: 各データセットに含まれる攻撃ペイロードを提供するMCPサーバー
 
 
 ## セットアップ
